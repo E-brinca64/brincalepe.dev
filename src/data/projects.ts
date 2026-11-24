@@ -1,21 +1,66 @@
-// EDIT HERE: add or change projects. Everything in the UI, terminal, tree and status bar is generated from this file.
-export type Status = "completed" | "in-development" | "experimental" | "concept";
+// Project records are maintained separately in project-list.ts.
+import { projectList } from "./project-list";
+
+export const categories = [
+  "frontend",
+  "backend",
+  "fullstack",
+  "automation",
+  "tools-utilities",
+  "devops",
+  "cybersecurity",
+  "artificial-intelligence",
+  "embedded",
+  "data-science",
+  "experiments",
+] as const;
+
+export type Category = (typeof categories)[number];
+export type Status = "completed" | "in-progress" | "experimental";
 export type Kind = "personal" | "academic";
+export type LocalizedText = { en: string; pt: string };
+
 export interface Project {
-  id: string; name: string; category: string; kind: Kind;
-  description: { en: string; pt: string }; purpose?: { en: string; pt: string };
-  status: Status; technologies: string[]; year: number; learning?: { en: string; pt: string };
-  repository?: string; website?: string;
+  id: string;
+  name: string;
+  description: LocalizedText;
+  category: Category;
+  technologies: string[];
+  status: Status;
+  github?: string;
+  demo?: string;
+  image?: string;
+
+  // Optional metadata retained by the existing Explorer.
+  kind?: Kind;
+  year?: number;
+  purpose?: LocalizedText;
+  conceptNote?: boolean;
 }
-export interface Note { id: string; category: string; filename: string; body: { en: string; pt: string } }
-export const categories = ["freelance", "frontend", "infrastructure", "automation", "data-science", "embedded", "experiments"];
-export const projects: Project[] = [
- { id:"homelab-srv01", name:"homelab-srv01", category:"infrastructure", kind:"personal", description:{en:"A repurposed notebook running Debian Server, managed over SSH from my Fedora machine.",pt:"Um notebook reaproveitado rodando Debian Server, gerenciado por SSH pelo meu computador Fedora."}, purpose:{en:"A home server for learning and self-hosted services. Planned services include n8n, Nextcloud, Gitea, photo storage and monitoring; not all are running yet.",pt:"Um servidor doméstico para aprender e hospedar serviços. Serviços planejados incluem n8n, Nextcloud, Gitea, fotos e monitoramento; nem todos estão em execução."}, status:"in-development", technologies:["Debian","Linux","SSH"], year:2026, repository:"", website:"" },
- { id:"personal-dashboard", name:"personal-dashboard", category:"automation", kind:"personal", description:{en:"A personal progress dashboard combining n8n automations, an AI agent called Hermes and the home server.",pt:"Um painel pessoal de progresso que combina automações n8n, um agente de IA chamado Hermes e o servidor doméstico."}, status:"experimental", technologies:["n8n","AI agents"], year:2026, repository:"", website:"" },
- { id:"moneta-ai", name:"moneta-ai", category:"data-science", kind:"academic", description:{en:"A university project exploring AI analysis of sales-meeting transcripts. My contribution is data science.",pt:"Projeto universitário que explora análise de transcrições de reuniões de vendas com IA. Minha contribuição é em ciência de dados."}, status:"in-development", technologies:["AI","Data science"], year:2026, repository:"", website:"" },
- { id:"pangovet", name:"pangovet", category:"infrastructure", kind:"academic", description:{en:"A networking and Docker checkpoint for a fictional veterinary clinic specializing in black-bellied pangolins.",pt:"Checkpoint de redes e Docker para uma clínica veterinária fictícia especializada em pangolins-de-barriga-preta."}, status:"completed", technologies:["Docker","Networking"], year:2026, repository:"", website:"" },
- { id:"smartwatch-disc", name:"smartwatch-disc", category:"embedded", kind:"personal", description:{en:"Concept for a coin-sized disc that could turn a watch into a smartwatch, with early feasibility, cost and nRF52-based PCB ideas.",pt:"Conceito de um disco do tamanho de uma moeda para transformar um relógio em smartwatch, com ideias iniciais de viabilidade, custo e PCB baseada em nRF52."}, purpose:{en:"Concept stage only — this is not a built or tested device.",pt:"Apenas na fase de conceito — este dispositivo não foi construído nem testado."}, status:"concept", technologies:["nRF52 (idea)","PCB (idea)"], year:2026, repository:"", website:"" },
- { id:"portfolio", name:"portfolio", category:"frontend", kind:"personal", description:{en:"This portfolio: a bilingual window into my work, systems and current operations.",pt:"Este portfólio: uma janela bilíngue para meus projetos, sistemas e operações atuais."}, status:"in-development", technologies:["React","TypeScript","Tailwind"], year:2026, repository:"", website:"" },
- { id:"github-readme-fastfetch", name:"github-readme-fastfetch", category:"experiments", kind:"personal", description:{en:"A custom SVG that mimics colored fastfetch output for my GitHub profile README.",pt:"Um SVG personalizado que imita a saída colorida do fastfetch no README do meu perfil GitHub."}, status:"completed", technologies:["SVG","fastfetch"], year:2026, repository:"", website:"" }
+
+export interface Note {
+  id: string;
+  category: Category;
+  filename: string;
+  body: LocalizedText;
+}
+
+export const projects: Project[] = projectList;
+
+export function getPopulatedCategories(
+  projectList: readonly Pick<Project, "category">[] = projects
+): Category[] {
+  return categories.filter((category) => projectList.some((project) => project.category === category));
+}
+
+export const notes: Note[] = [
+  {
+    id: "client-work",
+    category: "fullstack",
+    filename: "client-work.md",
+    body: {
+      en: "I take freelance full-stack and automation work. Client names and details are private by default. Anonymized case studies will be added here with the client's permission.",
+      pt: "Faço trabalhos freelance de full-stack e automação. Nomes e detalhes de clientes são privados por padrão. Estudos de caso anônimos serão adicionados com a permissão do cliente.",
+    },
+  },
 ];
-export const notes: Note[] = [{ id:"client-work", category:"freelance", filename:"client-work.md", body:{ en:"I take freelance full-stack and automation work. Client names and details are private by default. Anonymized case studies will be added here with the client's permission.", pt:"Faço trabalhos freelance de full-stack e automação. Nomes e detalhes de clientes são privados por padrão. Estudos de caso anônimos serão adicionados com a permissão do cliente." } }];

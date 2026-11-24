@@ -2,7 +2,7 @@ const en = {
   // Navigation
   navAbout: "ABOUT",
   navProjects: "PROJECTS",
-  navArsenal: "ARSENAL",
+  navArsenal: "STACK",
   navNow: "NOW",
   navContact: "CONTACT",
   menu: "MENU",
@@ -22,17 +22,22 @@ const en = {
 
   // About
   aboutLabel: "ABOUT",
-  aboutTitle: "Systems have to work for people, too.",
+  aboutAsideLabel: "PROFILE",
+  aboutTitle: "UNDERSTAND THE PROBLEM. BUILD THE SOLUTION.",
   about:
-    "I study Software Engineering at FIAP and Business Administration at UNIFAI. The combination is deliberate: I want to know how systems work and why someone would pay for them. Outside class I take freelance full-stack and automation work and run a homelab made of repurposed notebooks.",
+    "I'm interested in understanding how things work, not only from a technical perspective, but also through the people, decisions, and organizations behind them.\n\nAs Machiavelli suggests in The Prince, understanding a subject requires looking at it from different perspectives. This idea resonates with my decision to pursue both Software Engineering and Business Administration. I believe that building effective solutions requires understanding not only how systems work, but also why they exist, the people they serve, and the organizations they support.\n\nMy interests include full-stack development, automation, cybersecurity, and infrastructure. Outside technology, I enjoy playing guitar, games, watching films, and constantly learning something new.\n\nI value curiosity, critical thinking, and turning ideas into solutions that work in the real world.",
   background: "BACKGROUND",
-  base: "BASE",
+  backgroundDetails: "Software Engineering · Business Administration",
   worksOn: "WORKS ON",
+  worksOnDetails: "Full-stack Development · Automation\nLinux & Home Infrastructure · Cybersecurity",
+  interests: "INTERESTS",
+  interestsDetails: "Software · Systems · Technology · Cybersecurity",
   languages: "LANGUAGES",
+  languagesDetails: "Portuguese · English · French (beginner)",
 
-  // Arsenal
-  arsenalLabel: "ARSENAL",
-  arsenalTitle: "Tools I reach for.",
+  // Stack
+  arsenalLabel: "STACK",
+  arsenalTitle: "Technologies I use.",
 
   // Project Explorer
   projectsLabel: "PROJECT EXPLORER",
@@ -56,8 +61,8 @@ const en = {
   academic: "ACADEMIC",
   conceptNote: "CONCEPT — not built or tested",
   projectsCount: "PROJECTS",
-  inDevelopment: "IN DEVELOPMENT",
-  experimental: "EXPERIMENTAL / CONCEPT",
+  inDevelopment: "IN PROGRESS",
+  experimental: "EXPERIMENTAL",
   help: "Commands: help, ls [-l], cd <dir|..|~|/>, pwd, tree, cat <file>, open <project>, about, projects, status, uptime, fastfetch, whoami, contact, history, clear",
   mobileDirs: "DIRECTORIES",
   mobileFiles: "FILES",
@@ -66,9 +71,8 @@ const en = {
   projectType: "project",
   noteType: "note",
   status_completed: "completed",
-  "status_in-development": "in development",
+  "status_in-progress": "in progress",
   status_experimental: "experimental",
-  status_concept: "concept",
   terminalHint: "Type a command…",
 
   // Now

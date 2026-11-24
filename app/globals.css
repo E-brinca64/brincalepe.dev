@@ -540,6 +540,7 @@ input:focus-visible {
 .system-row b {
   font-weight: 400;
   color: var(--text-2);
+  white-space: pre-line;
 }
 
 .hero-footnote {
@@ -583,6 +584,10 @@ input:focus-visible {
   font-size: 15px;
   line-height: 1.9;
   margin: 0 0 30px;
+}
+
+.body-copy p + p {
+  margin-top: 1.1em;
 }
 
 .facts {
@@ -997,6 +1002,19 @@ input:focus-visible {
 
 .muted-copy {
   color: var(--muted);
+}
+
+.project-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin: 12px 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.project-image img {
+  object-fit: cover;
 }
 
 .detail-line {

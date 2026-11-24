@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowBigDown,
@@ -19,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { Navbar } from "@/src/components/Navbar";
-import { categories, notes, projects, type Project } from "@/src/data/projects";
+import { getPopulatedCategories, notes, projects, type Project } from "@/src/data/projects";
 import { technologyGroups } from "@/src/data/technologies";
 import { operations } from "@/src/data/now";
 import { services } from "@/src/data/services";
@@ -43,10 +44,7 @@ type Entry = {
   note?: (typeof notes)[number];
 };
 
-const categoryLabels: Record<string, string> = {
-  "data-science": "data-science",
-  infrastructure: "infrastructure",
-};
+const populatedCategories = getPopulatedCategories();
 
 function uptimeDays() {
   return Math.max(
@@ -81,7 +79,7 @@ export default function Portfolio() {
 
   const entries: Entry[] = useMemo(() => {
     if (currentCategory === "projects") {
-      return categories.map((category) => ({
+      return populatedCategories.map((category) => ({
         id: category,
         name: category,
         category,
@@ -222,7 +220,7 @@ export default function Portfolio() {
           const cat = path.split("/").filter(Boolean).at(-1) || "projects";
           output.push(
             cat === "projects"
-              ? categories.join("  ")
+              ? populatedCategories.join("  ")
               : outputEntries(cat).join("  ") || t.emptyFolder
           );
           break;
@@ -234,14 +232,15 @@ export default function Portfolio() {
           else if (argPath === "..")
             nextPath = pieces.length > 3 ? `/${pieces.slice(0, -1).join("/")}` : "/home/enzo/projects";
           else if (argPath === "/") nextPath = "/";
-          else if (categories.includes(argPath)) nextPath = `/home/enzo/projects/${argPath}`;
+          else if (populatedCategories.some((category) => category === argPath))
+            nextPath = `/home/enzo/projects/${argPath}`;
           else output.push(`cd: ${argPath}: no such directory`);
 
           if (!output.length) {
             changePath(nextPath);
             output.push(
               ...(nextPath.endsWith("projects")
-                ? categories
+                ? populatedCategories
                 : outputEntries(nextPath.split("/").at(-1) || "")
               ).map((x) => x)
             );
@@ -250,7 +249,7 @@ export default function Portfolio() {
         }
         case "tree":
           output.push(
-            `projects/\n${categories
+            `projects/\n${populatedCategories
               .map(
                 (c) =>
                   `├── ${c}/\n${outputEntries(c)
@@ -296,7 +295,7 @@ export default function Portfolio() {
           break;
         case "fastfetch":
           output.push(
-            `enzo@mainframe\n-----------\nOS        ${PROFILE.os}\nTerminal  ${PROFILE.terminal}\nStudies   Software Eng. @ FIAP / Business Adm. @ UNIFAI\nStack     React · Next.js · TypeScript · Python\nHomelab   srv-01 (Debian) — up ${days} days\nFocus     full-stack · automation · systems`
+            `USER        enzo@mainframe\nSTUDIES     Software Engineering / Business Administration (PAUSED)\nSTACK       Python · JavaScript · TypeScript\n            React · Next.js · Java · SQL\nENVIRONMENT Main PC · Fedora Linux\n            Homelab · Debian\nFOCUS       Software Development\n            Automation · Cybersecurity · Systems\nSTATUS      Open to Internships`
           );
           break;
         case "whoami":
@@ -343,12 +342,12 @@ export default function Portfolio() {
   const goParent = () => changePath(path.split("/").slice(0, -1).join("/") || "/");
 
   const fastfetch = [
-    ["OS", PROFILE.os],
-    ["Terminal", PROFILE.terminal],
-    ["Studies", "Software Eng. @ FIAP / Business Adm. @ UNIFAI"],
-    ["Stack", "React · Next.js · TypeScript · Python"],
-    ["Homelab", `srv-01 (Debian) — up ${days} days`],
-    ["Focus", "full-stack · automation · systems"],
+    ["USER", "enzo@mainframe"],
+    ["STUDIES", "Software Engineering / Business Administration (PAUSED)"],
+    ["STACK", "Python · JavaScript · TypeScript\nReact · Next.js · Java · SQL"],
+    ["ENVIRONMENT", "Main PC · Fedora Linux\nHomelab · Debian"],
+    ["FOCUS", "Software Development\nAutomation · Cybersecurity · Systems"],
+    ["STATUS", "Open to Internships"],
   ];
 
   return (
@@ -411,7 +410,6 @@ export default function Portfolio() {
               <span>{t.fastfetch}</span>
               <span>SYS—01</span>
             </div>
-            <p className="host">enzo@mainframe</p>
             <div className="system-rule" />
             {fastfetch.map(([key, value]) => (
               <p className="system-row" key={key}>
@@ -430,30 +428,32 @@ export default function Portfolio() {
         <section className="section wrap editorial" id="about">
           <div className="section-heading">
             <span>01 / {t.aboutLabel}</span>
-            <span>PERSONAL DOSSIER</span>
+            <span>{t.aboutAsideLabel}</span>
           </div>
           <div className="editorial-grid">
             <h2>{t.aboutTitle}</h2>
             <div>
-              <p className="body-copy">{t.about}</p>
+              <div className="body-copy">
+                {t.about.split("\n\n").map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+              </div>
               <dl className="facts">
                 <div>
                   <dt>{t.background}</dt>
-                  <dd>Software Engineering · Business Administration</dd>
-                </div>
-                <div>
-                  <dt>{t.base}</dt>
-                  <dd>São Paulo, Brazil</dd>
+                  <dd>{t.backgroundDetails}</dd>
                 </div>
                 <div>
                   <dt>{t.worksOn}</dt>
-                  <dd>full-stack web · automation · home infrastructure</dd>
+                  <dd style={{ whiteSpace: "pre-line" }}>{t.worksOnDetails}</dd>
+                </div>
+                <div>
+                  <dt>{t.interests}</dt>
+                  <dd>{t.interestsDetails}</dd>
                 </div>
                 <div>
                   <dt>{t.languages}</dt>
-                  <dd>
-                    Portuguese · English <span className="confirm">{"// CONFIRM"}</span>
-                  </dd>
+                  <dd>{t.languagesDetails}</dd>
                 </div>
               </dl>
             </div>
@@ -590,41 +590,34 @@ export default function Portfolio() {
                 >
                   <FolderOpen size={14} /> projects
                 </button>
-                {categories.map((category) => {
-                  const hasFiles =
-                    projects.some((p) => p.category === category) ||
-                    notes.some((n) => n.category === category);
-                  if (!hasFiles) return null;
-
-                  return (
-                    <button
-                      key={category}
-                      className={`tree-item indent ${currentCategory === category ? "current" : ""}`}
-                      onClick={() => {
-                        setExpanded((old) =>
-                          old.includes(category) ? old.filter((x) => x !== category) : [...old, category]
-                        );
-                        changePath(`/home/enzo/projects/${category}`);
-                        setLines((old) => [
-                          ...old,
-                          `enzo@mainframe:~/projects$ cd ${category}`,
-                          `enzo@mainframe:~/projects/${category}$ ls`,
-                        ]);
-                      }}
-                    >
-                      <ChevronRight
-                        className={expanded.includes(category) ? "turn" : ""}
-                        size={12}
-                      />
-                      {expanded.includes(category) ? (
-                        <FolderOpen size={14} />
-                      ) : (
-                        <Folder size={14} />
-                      )}
-                      <span>{categoryLabels[category] ?? category}</span>
-                    </button>
-                  );
-                })}
+                {populatedCategories.map((category) => (
+                  <button
+                    key={category}
+                    className={`tree-item indent ${currentCategory === category ? "current" : ""}`}
+                    onClick={() => {
+                      setExpanded((old) =>
+                        old.includes(category) ? old.filter((x) => x !== category) : [...old, category]
+                      );
+                      changePath(`/home/enzo/projects/${category}`);
+                      setLines((old) => [
+                        ...old,
+                        `enzo@mainframe:~/projects$ cd ${category}`,
+                        `enzo@mainframe:~/projects/${category}$ ls`,
+                      ]);
+                    }}
+                  >
+                    <ChevronRight
+                      className={expanded.includes(category) ? "turn" : ""}
+                      size={12}
+                    />
+                    {expanded.includes(category) ? (
+                      <FolderOpen size={14} />
+                    ) : (
+                      <Folder size={14} />
+                    )}
+                    <span>{category}</span>
+                  </button>
+                ))}
               </aside>
 
               <section className="files-pane" aria-label={t.fileView}>
@@ -702,7 +695,7 @@ export default function Portfolio() {
                   <>
                     <div className="detail-title">
                       <span className="detail-id">
-                        {selectedProject.kind.toUpperCase()} / {selectedProject.year}
+                        {selectedProject.kind?.toUpperCase() ?? "PROJECT"} / {selectedProject.year ?? "—"}
                       </span>
                       <h3>{selectedProject.name}</h3>
                       <span className="status-pill">
@@ -710,24 +703,37 @@ export default function Portfolio() {
                       </span>
                     </div>
                     <p className="detail-copy">{selectedProject.description[lang]}</p>
+                    {selectedProject.image && (
+                      <div className="project-image">
+                        <Image
+                          src={selectedProject.image}
+                          alt={`${selectedProject.name} preview`}
+                          fill
+                          sizes="(max-width: 900px) 100vw, 320px"
+                          unoptimized
+                        />
+                      </div>
+                    )}
                     {selectedProject.purpose && (
                       <p className="detail-copy muted-copy">{selectedProject.purpose[lang]}</p>
                     )}
-                    <div className="detail-line">
-                      <span>KIND</span>
-                      <b>{selectedProject.kind === "personal" ? t.personal : t.academic}</b>
-                    </div>
+                    {selectedProject.kind && (
+                      <div className="detail-line">
+                        <span>KIND</span>
+                        <b>{selectedProject.kind === "personal" ? t.personal : t.academic}</b>
+                      </div>
+                    )}
                     <div className="detail-line">
                       <span>TECH</span>
                       <b>{selectedProject.technologies.join(" · ")}</b>
                     </div>
-                    {selectedProject.status === "concept" && (
+                    {selectedProject.conceptNote && (
                       <p className="concept-warning">{t.conceptNote}</p>
                     )}
                     <div className="detail-actions">
-                      {selectedProject.repository && (
+                      {selectedProject.github && (
                         <a
-                          href={selectedProject.repository}
+                          href={selectedProject.github}
                           target="_blank"
                           rel="noreferrer"
                         >
@@ -735,8 +741,8 @@ export default function Portfolio() {
                           <ArrowUpRight size={13} />
                         </a>
                       )}
-                      {selectedProject.website && (
-                        <a href={selectedProject.website} target="_blank" rel="noreferrer">
+                      {selectedProject.demo && (
+                        <a href={selectedProject.demo} target="_blank" rel="noreferrer">
                           {t.viewLive}
                           <ArrowUpRight size={13} />
                         </a>
@@ -821,7 +827,7 @@ export default function Portfolio() {
                         if (e.key === "Tab") {
                           e.preventDefault();
                           const terms = [
-                            ...categories,
+                            ...populatedCategories,
                             ...projects.map((p) => p.name),
                             "help",
                             "ls",
@@ -863,11 +869,8 @@ export default function Portfolio() {
             <div className="statusbar">
               <span>
                 {projects.length} {t.projectsCount} ·{" "}
-                {projects.filter((p) => p.status === "in-development").length} {t.inDevelopment} ·{" "}
-                {
-                  projects.filter((p) => p.status === "experimental" || p.status === "concept")
-                    .length
-                }{" "}
+                {projects.filter((p) => p.status === "in-progress").length} {t.inDevelopment} ·{" "}
+                {projects.filter((p) => p.status === "experimental").length}{" "}
                 {t.experimental}
               </span>
               <span>srv-01 up {days}d · UTF-8</span>
