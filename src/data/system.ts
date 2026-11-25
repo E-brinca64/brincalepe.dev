@@ -7,9 +7,10 @@ export const PROFILE = {
   name: "Enzo Brincalepe",
   city: "São Paulo",
   country: "Brazil",
-  email: "enzo.brincalepe@proton.me",
+  email: "mailto:me.client802@passinbox.com",
   github: "https://github.com/E-brinca64", 
   linkedin: "https://www.linkedin.com/in/enzo-brincalepe/", 
+  instagram: "https://www.instagram.com/enzo.brincalepe/",
   resume: "", // CONFIRM: add /resume.pdf when available
   whatsapp: "",
   os: "Fedora Linux 44 (KDE Plasma)", 

@@ -13,6 +13,8 @@ export type NavbarLabels = {
   switchLanguage: string
   closeMenu: string
   openMenu: string
+  workspace: string
+  mainNavigation: string
 }
 
 type NavbarProps = {
@@ -103,7 +105,7 @@ export function Navbar({ language, labels, onToggleLanguage, onBrandActivate }: 
         <span className="brand-mark">EB<span className="!text-[#d9a442]">.</span></span>
         <span className="brand-name">
           ENZO BRINCALEPE
-          <small>PERSONAL WORKSPACE</small>
+          <small>{labels.workspace}</small>
         </span>
       </a>
 
@@ -121,7 +123,7 @@ export function Navbar({ language, labels, onToggleLanguage, onBrandActivate }: 
       <nav
         id="main-navigation"
         className={menuOpen ? 'nav-links nav-open' : 'nav-links'}
-        aria-label="Main navigation"
+        aria-label={labels.mainNavigation}
       >
         {links.map(([label, href]) => {
           const sectionId = href.replace('#', '')

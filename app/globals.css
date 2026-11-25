@@ -1155,6 +1155,26 @@ input:focus-visible {
   color: #505654;
 }
 
+.terminal-input-wrap {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+}
+
+.terminal-input-wrap input {
+  width: 100%;
+  padding-left: 10px;
+}
+
+.terminal-input-cursor {
+  position: absolute;
+  left: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
 .statusbar {
   min-height: 29px;
   padding: 0 12px;
@@ -1202,37 +1222,6 @@ input:focus-visible {
   margin: 0;
   color: var(--text-2);
   font-size: 13px;
-}
-
-.rules-section {
-  min-height: 420px;
-}
-
-.rules-section h2 {
-  color: var(--text);
-  margin-bottom: 26px;
-}
-
-.config-file {
-  padding: 22px 0 22px clamp(20px, 8vw, 115px);
-  font: clamp(12px, 2vw, 17px) / 2 'JetBrains Mono', monospace;
-  color: var(--text-2);
-}
-
-.config-file p {
-  margin: 0;
-}
-
-.config-file b {
-  color: var(--amber);
-  font-weight: 500;
-}
-
-.config-file span {
-  font-size: 10px;
-  color: var(--muted);
-  display: block;
-  margin-top: 12px;
 }
 
 /* ==========================================================================
@@ -1289,6 +1278,26 @@ input:focus-visible {
 }
 
 .contact-links a:hover {
+  color: var(--amber);
+}
+
+.contact-links .contact-copy {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 39px;
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  text-align: left;
+  font: 9px 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.contact-links .contact-copy:hover {
   color: var(--amber);
 }
 
@@ -1798,15 +1807,6 @@ input:focus-visible {
 
   .op-number {
     font-size: 8px;
-  }
-
-  .rules-section {
-    min-height: 0;
-  }
-
-  .config-file {
-    padding: 19px 0;
-    font-size: 12px;
   }
 
   .contact-grid {

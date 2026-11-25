@@ -3,13 +3,13 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowBigDown,
   ArrowDown,
   ArrowLeft,
   ArrowUpRight,
   ChevronDown,
   ChevronRight,
   Command,
+  Copy,
   FileCode2,
   FileText,
   Folder,
@@ -20,12 +20,12 @@ import {
   X,
 } from "lucide-react";
 import { Navbar } from "@/src/components/Navbar";
+import { CurrentOperations } from "@/src/components/CurrentOperations";
+import { scrollTerminalToBottom } from "@/src/components/terminal-scroll";
 import { getPopulatedCategories, notes, projects, type Project } from "@/src/data/projects";
 import { technologyGroups } from "@/src/data/technologies";
-import { operations } from "@/src/data/now";
 import { services } from "@/src/data/services";
 import {
-  AVAILABILITY,
   HOMELAB_START,
   LAST_UPDATED,
   PROFILE,
@@ -55,12 +55,13 @@ function uptimeDays() {
 
 export default function Portfolio() {
   const [lang, setLang] = useState<Lang>("en");
+  const t = lang === "en" ? en : pt;
   const [path, setPath] = useState("/home/enzo/projects");
   const [selected, setSelected] = useState<string | null>(projects[0]?.id ?? null);
   const [view, setView] = useState<"list" | "grid">("list");
   const [lines, setLines] = useState<string[]>([
     "enzo@mainframe:~/projects$ help",
-    "Type help to list available commands.",
+    t.help,
   ]);
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
@@ -70,10 +71,22 @@ export default function Portfolio() {
   const [mobileStep, setMobileStep] = useState<"dirs" | "files" | "details">("files");
   const [expanded, setExpanded] = useState<string[]>(["projects"]);
   const [days, setDays] = useState(0);
+  const [emailCopyStatus, setEmailCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
 
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const t = lang === "en" ? en : pt;
+  const terminalOutputRef = useRef<HTMLDivElement>(null);
+  const categoryLabel = (category: string) =>
+    t.categoryNames[category as keyof typeof t.categoryNames] ?? category;
+  const statusLabel = (status: Project["status"]) => {
+    switch (status) {
+      case "completed":
+        return t.status_completed;
+      case "in-progress":
+        return t["status_in-progress"];
+      case "experimental":
+        return t.status_experimental;
+    }
+  };
   
   const currentCategory = path.split("/").filter(Boolean).at(-1) || "projects";
 
@@ -133,11 +146,23 @@ export default function Portfolio() {
   }, []);
 
   useEffect(() => {
+    setLines((current) =>
+      current.length <= 2
+        ? ["enzo@mainframe:~/projects$ help", t.help]
+        : current
+    );
+  }, [t.help]);
+
+  useEffect(() => {
     document.documentElement.lang = lang === "pt" ? "pt-BR" : "en";
     try {
       window.localStorage.setItem("enzo-language", lang);
     } catch {}
   }, [lang]);
+
+  useEffect(() => {
+    scrollTerminalToBottom(terminalOutputRef.current);
+  }, [lines, terminalOpen]);
 
   useEffect(() => {
     const handle = (event: KeyboardEvent) => {
@@ -220,7 +245,7 @@ export default function Portfolio() {
           const cat = path.split("/").filter(Boolean).at(-1) || "projects";
           output.push(
             cat === "projects"
-              ? populatedCategories.join("  ")
+              ? populatedCategories.map(categoryLabel).join("  ")
               : outputEntries(cat).join("  ") || t.emptyFolder
           );
           break;
@@ -234,7 +259,7 @@ export default function Portfolio() {
           else if (argPath === "/") nextPath = "/";
           else if (populatedCategories.some((category) => category === argPath))
             nextPath = `/home/enzo/projects/${argPath}`;
-          else output.push(`cd: ${argPath}: no such directory`);
+          else output.push(t.directoryNotFound.replace("{name}", argPath));
 
           if (!output.length) {
             changePath(nextPath);
@@ -249,10 +274,10 @@ export default function Portfolio() {
         }
         case "tree":
           output.push(
-            `projects/\n${populatedCategories
+            `${t.projectsRoot}/\n${populatedCategories
               .map(
                 (c) =>
-                  `├── ${c}/\n${outputEntries(c)
+                  `├── ${categoryLabel(c)}/\n${outputEntries(c)
                     .map((f) => `│   ├── ${f}`)
                     .join("\n")}`
               )
@@ -264,15 +289,15 @@ export default function Portfolio() {
           if (found) {
             setSelected(found.id);
             changePath(`/home/enzo/projects/${found.category}`);
-            output.push(`Selected ${found.name}`);
+            output.push(t.projectSelected.replace("{name}", found.name));
           } else {
-            output.push(`open: ${arg}: project not found`);
+            output.push(t.projectNotFound.replace("{name}", arg));
           }
           break;
         }
         case "cat": {
           const found = allFiles.find((f) => f.name === arg || f.id === arg);
-          if (!found) output.push(`cat: ${arg}: file not found`);
+          if (!found) output.push(t.fileNotFound.replace("{name}", arg));
           else if (found.project) {
             setSelected(found.project.id);
             output.push(found.project.description[lang]);
@@ -283,19 +308,21 @@ export default function Portfolio() {
           break;
         }
         case "projects":
-          output.push(...projects.map((p) => `${p.name}  [${p.status}]`));
+          output.push(...projects.map((p) => `${p.name}  [${statusLabel(p.status)}]`));
           break;
         case "uptime":
-          output.push(`srv-01 up ${days} days`);
+          output.push(t.uptimeOutput.replace("{days}", String(days)));
           break;
         case "status":
           output.push(
-            `mainframe · ${PROFILE.os}\nsrv-01 · Debian Server · up ${days} days\n${projects.length} projects`
+            `${t.mainframeStatus.replace("{os}", PROFILE.os)}\n${t.serverStatus.replace("{days}", String(days))}\n${t.projectCountOutput.replace("{count}", String(projects.length))}`
           );
           break;
         case "fastfetch":
           output.push(
-            `USER        enzo@mainframe\nSTUDIES     Software Engineering / Business Administration (PAUSED)\nSTACK       Python · JavaScript · TypeScript\n            React · Next.js · Java · SQL\nENVIRONMENT Main PC · Fedora Linux\n            Homelab · Debian\nFOCUS       Software Development\n            Automation · Cybersecurity · Systems\nSTATUS      Open to Internships`
+            fastfetch
+              .map(([label, value]) => `${label.padEnd(12)}${value.replace(/\\n/g, "\n")}`)
+              .join("\n")
           );
           break;
         case "whoami":
@@ -315,13 +342,13 @@ export default function Portfolio() {
           setInput("");
           return;
         case "sudo":
-          output.push("enzo is not in the sudoers file. This incident will be reported.");
+          output.push(t.sudoOutput);
           break;
         case "rm":
-          output.push("rm: read-only portfolio.");
+          output.push(t.readOnlyOutput);
           break;
         default:
-          output.push(`command not found: ${name}`);
+          output.push(t.commandNotFound.replace("{name}", name));
       }
 
       setLines((old) => [
@@ -340,14 +367,23 @@ export default function Portfolio() {
     window.setTimeout(() => inputRef.current?.focus(), 50);
   };
   const goParent = () => changePath(path.split("/").slice(0, -1).join("/") || "/");
+  const copyEmail = async () => {
+    const address = PROFILE.email.replace(/^mailto:/, "");
+    try {
+      await navigator.clipboard.writeText(address);
+      setEmailCopyStatus("copied");
+    } catch {
+      setEmailCopyStatus("failed");
+    }
+  };
 
   const fastfetch = [
-    ["USER", "enzo@mainframe"],
-    ["STUDIES", "Software Engineering / Business Administration (PAUSED)"],
-    ["STACK", "Python · JavaScript · TypeScript\nReact · Next.js · Java · SQL"],
-    ["ENVIRONMENT", "Main PC · Fedora Linux\nHomelab · Debian"],
-    ["FOCUS", "Software Development\nAutomation · Cybersecurity · Systems"],
-    ["STATUS", "Open to Internships"],
+    [t.fastfetchUserLabel, t.fastfetchUserValue],
+    [t.fastfetchStudiesLabel, t.fastfetchStudiesValue],
+    [t.fastfetchStackLabel, t.fastfetchStackValue],
+    [t.fastfetchEnvironmentLabel, t.fastfetchEnvironmentValue],
+    [t.fastfetchFocusLabel, t.fastfetchFocusValue],
+    [t.fastfetchStatusLabel, t.fastfetchStatusValue],
   ];
 
   return (
@@ -364,6 +400,8 @@ export default function Portfolio() {
           switchLanguage: lang === "en" ? "Switch language" : "Mudar idioma",
           closeMenu: t.close,
           openMenu: t.menu,
+          workspace: t.workspace,
+          mainNavigation: t.mainNavigation,
         }}
         onToggleLanguage={toggleLanguage}
         onBrandActivate={openOverlay}
@@ -421,7 +459,7 @@ export default function Portfolio() {
           </aside>
 
           <p className="hero-footnote flex items-center gap-2 text-sm text-zinc-500 ">
-             <ArrowDown className="w-4 h-4" /> SCROLL TO EXPLORE
+             <ArrowDown className="w-4 h-4" /> {t.scrollToExplore}
           </p>
         </section>
 
@@ -463,34 +501,24 @@ export default function Portfolio() {
         <section className="section wrap arsenal" id="arsenal">
           <div className="section-heading">
             <span>02 / {t.arsenalLabel}</span>
-            <span>TECHNICAL INVENTORY</span>
+            <span>{t.technicalInventory}</span>
           </div>
           <h2>{t.arsenalTitle}</h2>
           <div className="tech-list">
             {technologyGroups.map((group) => (
-              <div className="tech-row" key={group.name}>
-                <h3>{group.name}</h3>
+              <div className="tech-row" key={group.name.en}>
+                <h3>{group.name[lang]}</h3>
                 <div className="tech-items">
                   {group.items.map((item) => (
-                    <span
-                      className="tech-item"
-                      key={typeof item === "string" ? item : item.name}
-                    >
-                      {typeof item === "string" ? (
-                        item
-                      ) : (
-                        <>
-                          {item.name}
-                          <small>{item.status}</small>
-                        </>
-                      )}
+                    <span className="tech-item" key={item.name.en}>
+                      {item.name[lang]}
+                      {item.status && <small>{item.status[lang]}</small>}
                     </span>
                   ))}
                 </div>
               </div>
             ))}
           </div>
-          <p className="confirm-note">{"// CONFIRM: status tags and inventory reflect current use."}</p>
         </section>
 
         <section className="section wrap explorer-section" id="projects">
@@ -507,12 +535,12 @@ export default function Portfolio() {
             <div className="window-bar">
               <div className="window-title">
                 <span className="window-icon">EC</span>
-                <strong>PROJECT EXPLORER</strong>
+                <strong>{t.projectsLabel}</strong>
               </div>
               <div className="breadcrumb">
                 <button
                   onClick={() => changePath("/home/enzo/projects")}
-                  aria-label="Go to projects root"
+                  aria-label={t.goToProjectsRoot}
                 >
                   ⌂
                 </button>
@@ -543,14 +571,14 @@ export default function Portfolio() {
               <div className="window-controls">
                 <button
                   onClick={() => setView("list")}
-                  aria-label="List view"
+                  aria-label={t.listView}
                   className={view === "list" ? "selected" : ""}
                 >
                   <List size={15} />
                 </button>
                 <button
                   onClick={() => setView("grid")}
-                  aria-label="Grid view"
+                  aria-label={t.gridView}
                   className={view === "grid" ? "selected" : ""}
                 >
                   <Grid2X2 size={14} />
@@ -588,7 +616,7 @@ export default function Portfolio() {
                   className={`tree-item root ${currentCategory === "projects" ? "current" : ""}`}
                   onClick={() => changePath("/home/enzo/projects")}
                 >
-                  <FolderOpen size={14} /> projects
+                  <FolderOpen size={14} /> {t.projectsRoot}
                 </button>
                 {populatedCategories.map((category) => (
                   <button
@@ -628,7 +656,7 @@ export default function Portfolio() {
                   <button
                     className="back-button"
                     onClick={goParent}
-                    aria-label="Go to parent directory"
+                    aria-label={t.goToParentDirectory}
                   >
                     <ArrowLeft size={14} />
                   </button>
@@ -695,7 +723,7 @@ export default function Portfolio() {
                   <>
                     <div className="detail-title">
                       <span className="detail-id">
-                        {selectedProject.kind?.toUpperCase() ?? "PROJECT"} / {selectedProject.year ?? "—"}
+                        {selectedProject.kind === "personal" ? t.personal : selectedProject.kind === "academic" ? t.academic : t.projectLabel} / {selectedProject.year ?? "—"}
                       </span>
                       <h3>{selectedProject.name}</h3>
                       <span className="status-pill">
@@ -719,12 +747,12 @@ export default function Portfolio() {
                     )}
                     {selectedProject.kind && (
                       <div className="detail-line">
-                        <span>KIND</span>
+                        <span>{t.kindLabel}</span>
                         <b>{selectedProject.kind === "personal" ? t.personal : t.academic}</b>
                       </div>
                     )}
                     <div className="detail-line">
-                      <span>TECH</span>
+                      <span>{t.techLabel}</span>
                       <b>{selectedProject.technologies.join(" · ")}</b>
                     </div>
                     {selectedProject.conceptNote && (
@@ -776,7 +804,7 @@ export default function Portfolio() {
 
               {terminalOpen && (
                 <div className="terminal-body">
-                  <div className="terminal-output" aria-live="polite">
+                  <div className="terminal-output" aria-live="polite" ref={terminalOutputRef}>
                     {lines.slice(-60).map((line, i) => (
                       <p
                         key={`${i}-${line}`}
@@ -800,67 +828,73 @@ export default function Portfolio() {
                     <label htmlFor="terminal-command">
                       enzo@mainframe:~{path.replace("/home/enzo", "")}$
                     </label>
-                    <input
-                      id="terminal-command"
-                      ref={inputRef}
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "ArrowUp") {
-                          e.preventDefault();
-                          const i =
-                            historyIndex < 0 ? history.length - 1 : Math.max(0, historyIndex - 1);
-                          setHistoryIndex(i);
-                          setInput(history[i] ?? "");
-                        }
-                        if (e.key === "ArrowDown") {
-                          e.preventDefault();
-                          const i = historyIndex + 1;
-                          if (i >= history.length) {
-                            setHistoryIndex(-1);
-                            setInput("");
-                          } else {
+                    <div className="terminal-input-wrap">
+                      {input.length === 0 && (
+                        <span className="cursor terminal-input-cursor" aria-hidden="true" />
+                      )}
+                      <input
+                        id="terminal-command"
+                        ref={inputRef}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            const i =
+                              historyIndex < 0
+                                ? history.length - 1
+                                : Math.max(0, historyIndex - 1);
                             setHistoryIndex(i);
                             setInput(history[i] ?? "");
                           }
-                        }
-                        if (e.key === "Tab") {
-                          e.preventDefault();
-                          const terms = [
-                            ...populatedCategories,
-                            ...projects.map((p) => p.name),
-                            "help",
-                            "ls",
-                            "cd",
-                            "pwd",
-                            "tree",
-                            "cat",
-                            "open",
-                            "about",
-                            "projects",
-                            "status",
-                            "uptime",
-                            "fastfetch",
-                            "whoami",
-                            "contact",
-                            "history",
-                            "clear",
-                          ];
-                          const match = terms.find((term) =>
-                            term.startsWith(input.split(" ").at(-1) ?? "")
-                          );
-                          if (match) {
-                            setInput(
-                              (old) => old.slice(0, old.lastIndexOf(" ") + 1) + match
-                            );
+                          if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            const i = historyIndex + 1;
+                            if (i >= history.length) {
+                              setHistoryIndex(-1);
+                              setInput("");
+                            } else {
+                              setHistoryIndex(i);
+                              setInput(history[i] ?? "");
+                            }
                           }
-                        }
-                      }}
-                      placeholder={t.terminalHint}
-                      autoComplete="off"
-                      spellCheck={false}
-                    />
-                    <span className="cursor" />
+                          if (e.key === "Tab") {
+                            e.preventDefault();
+                            const terms = [
+                              ...populatedCategories,
+                              ...projects.map((p) => p.name),
+                              "help",
+                              "ls",
+                              "cd",
+                              "pwd",
+                              "tree",
+                              "cat",
+                              "open",
+                              "about",
+                              "projects",
+                              "status",
+                              "uptime",
+                              "fastfetch",
+                              "whoami",
+                              "contact",
+                              "history",
+                              "clear",
+                            ];
+                            const match = terms.find((term) =>
+                              term.startsWith(input.split(" ").at(-1) ?? "")
+                            );
+                            if (match) {
+                              setInput(
+                                (old) => old.slice(0, old.lastIndexOf(" ") + 1) + match
+                              );
+                            }
+                          }
+                        }}
+                        placeholder={t.terminalHint}
+                        autoComplete="off"
+                        spellCheck={false}
+                      />
+                    </div>
                   </form>
                 </div>
               )}
@@ -878,56 +912,18 @@ export default function Portfolio() {
           </div>
         </section>
 
-        <section className="section wrap now-section" id="now">
-          <div className="section-heading">
-            <span>04 / {t.nowLabel}</span>
-            <span>
-              {t.updated} {LAST_UPDATED}
-            </span>
-          </div>
-          <h2>{t.nowTitle}</h2>
-          <div className="operations">
-            {operations.map((op) => (
-              <div className="operation" key={op.number}>
-                <span className="op-number">{op.number}</span>
-                <strong>{op.label}</strong>
-                <p>{lang === "en" ? op.en : op.pt}</p>
-              </div>
-            ))}
-          </div>
-          <p className="confirm-note">{"// CONFIRM: current operations are editable drafts."}</p>
-        </section>
-
-        <section className="section wrap rules-section">
-          <div className="section-heading">
-            <span>05 / {t.rulesLabel}</span>
-            <span>CONFIGURATION</span>
-          </div>
-          <h2>{t.rulesTitle}</h2>
-          <div className="config-file">
-            <p>
-              <b>rule_01</b> = own your stack
-            </p>
-            <p>
-              <b>rule_02</b> = ship ugly, then fix
-            </p>
-            <p>
-              <b>rule_03</b> = understand before you automate
-            </p>
-            <p>
-              <b>rule_04</b> = write it down
-            </p>
-            <span>
-              {t.rulesFooter} {LAST_UPDATED}
-            </span>
-          </div>
-          <p className="confirm-note">{"// DRAFT: replace these with Enzo’s own rules."}</p>
-        </section>
+        <CurrentOperations
+          lang={lang}
+          label={t.nowLabel}
+          title={t.nowTitle}
+          updated={t.updated}
+          lastUpdated={LAST_UPDATED}
+        />
 
         <section className="section wrap contact-section" id="contact">
           <div className="section-heading">
-            <span>06 / {t.contactLabel}</span>
-            <span>OPEN CHANNEL</span>
+            <span>05 / {t.contactLabel}</span>
+            <span>{t.contactChannel}</span>
           </div>
           <div className="contact-grid">
             <div>
@@ -936,16 +932,22 @@ export default function Portfolio() {
               <div className="service-list">
                 <span>{t.whatTake}</span>
                 {services.map((service) => (
-                  <p key={service}>↳ {service}</p>
+                  <p key={service.en}>↳ {service[lang]}</p>
                 ))}
               </div>
             </div>
             <div className="contact-links">
               {PROFILE.email.startsWith("mailto:") ? (
-                <a href={PROFILE.email}>
-                  {t.email}
-                  <ArrowUpRight size={14} />
-                </a>
+                <>
+                  <a href={PROFILE.email}>
+                    {t.email}
+                    <ArrowUpRight size={14} />
+                  </a>
+                  <button className="contact-copy" type="button" onClick={copyEmail}>
+                    <span>{emailCopyStatus === "copied" ? t.emailCopied : emailCopyStatus === "failed" ? t.emailCopyFailed : t.copyEmail}</span>
+                    <Copy size={14} aria-hidden="true" />
+                  </button>
+                </>
               ) : (
                 <span className="disabled-link">
                   {t.email}
@@ -974,6 +976,12 @@ export default function Portfolio() {
                   <small>{"// CONFIRM: add LinkedIn URL"}</small>
                 </span>
               )}
+              {PROFILE.instagram && (
+                <a href={PROFILE.instagram} target="_blank" rel="noreferrer">
+                  {t.instagram}
+                  <ArrowUpRight size={14} />
+                </a>
+              )}
               {PROFILE.whatsapp && (
                 <a href={PROFILE.whatsapp}>
                   {t.whatsapp}
@@ -1000,18 +1008,18 @@ export default function Portfolio() {
       </footer>
 
       {overlay && (
-        <div className="terminal-overlay" role="dialog" aria-modal="true" aria-label="Terminal">
+        <div className="terminal-overlay" role="dialog" aria-modal="true" aria-label={t.terminal}>
           <div className="overlay-window">
             <div className="overlay-header">
               <span>enzo@mainframe:~</span>
-              <button onClick={() => setOverlay(false)} aria-label="Close terminal">
+              <button onClick={() => setOverlay(false)} aria-label={t.close}>
                 <X size={16} />
               </button>
             </div>
             <div className="overlay-copy">
               <p>enzo@mainframe:~$ whoami</p>
               <p>enzo</p>
-              <p>Type <b>help</b> for commands, or press Escape to close.</p>
+              <p>{lang === "en" ? <>Type <b>help</b> for commands, or press Escape to close.</> : <>Digite <b>help</b> para ver os comandos ou pressione Escape para fechar.</>}</p>
             </div>
             <form
               className="terminal-prompt"
