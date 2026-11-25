@@ -54,13 +54,5 @@ export function getPopulatedCategories(
 }
 
 export const notes: Note[] = [
-  {
-    id: "client-work",
-    category: "fullstack",
-    filename: "client-work.md",
-    body: {
-      en: "I take freelance full-stack and automation work. Client names and details are private by default. Anonymized case studies will be added here with the client's permission.",
-      pt: "Faço trabalhos freelance de full-stack e automação. Nomes e detalhes de clientes são privados por padrão. Estudos de caso anônimos serão adicionados com a permissão do cliente.",
-    },
-  },
+  
 ];

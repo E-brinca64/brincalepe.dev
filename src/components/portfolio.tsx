@@ -411,7 +411,7 @@ export default function Portfolio() {
         <section className="hero wrap">
           <div className="hero-copy">
             <p className="eyebrow">
-              <span className="marker">EC—001</span>
+              <span className="marker">00</span>
               {t.eyebrow}
             </p>
             <h1>
