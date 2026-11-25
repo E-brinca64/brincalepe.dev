@@ -13,15 +13,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Enzo Campo — Software Engineering & Automation",
+  title: "Enzo Brincalepe",
   description:
-    "Software engineering and business administration student in São Paulo. Full-stack freelance work, automation, and home infrastructure.",
+    "Software Security & Business",
   openGraph: {
-    title: "Enzo Campo — Software Engineering & Automation",
-    description: "Systems, software, and the business around them.",
+    title: "Enzo Brincalepe",
+    description: "",
     type: "website",
   },
-  icons: { icon: "/icon.svg" },
+  icons: { icon: "/icon.ico" },
 };
 
 export const viewport: Viewport = {
