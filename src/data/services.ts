@@ -1,3 +1,3 @@
-export const services = [
+export const services: { en: string; pt: string }[] = [
   
 ];

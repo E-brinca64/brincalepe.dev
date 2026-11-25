@@ -707,7 +707,7 @@ export default function Portfolio() {
                                 : t.projectType}
                           </span>
                           <span>
-                            {project ? t[`status_${project.status}` as keyof typeof t] : "—"}
+                            {project ? statusLabel(project.status) : "—"}
                           </span>
                           <span>{project?.year ?? "—"}</span>
                         </button>
@@ -727,7 +727,7 @@ export default function Portfolio() {
                       </span>
                       <h3>{selectedProject.name}</h3>
                       <span className="status-pill">
-                        ● {t[`status_${selectedProject.status}` as keyof typeof t]}
+                        ● {statusLabel(selectedProject.status)}
                       </span>
                     </div>
                     <p className="detail-copy">{selectedProject.description[lang]}</p>
@@ -928,9 +928,9 @@ export default function Portfolio() {
           <div className="contact-grid">
             <div>
               <h2>{t.contactTitle}</h2>
-              <p>{t.contactSub}</p>
+              
               <div className="service-list">
-                <span>{t.whatTake}</span>
+                
                 {services.map((service) => (
                   <p key={service.en}>↳ {service[lang]}</p>
                 ))}
@@ -1001,7 +1001,7 @@ export default function Portfolio() {
 
       <footer className="footer wrap">
         <span>{t.footer}</span>
-        {SERVED_FROM_HOMELAB && <span>{t.served}</span>}
+        
         <button onClick={openOverlay}>
           <Command size={13} /> `
         </button>
